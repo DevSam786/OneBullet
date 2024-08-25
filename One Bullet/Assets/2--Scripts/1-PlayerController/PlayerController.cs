@@ -5,10 +5,19 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
+    [Header("Variables")]
     public float moveSpeed;
+    public Transform orienation;
+    public float groundDrag;
+    public LayerMask whatIsGround;
+    public float playerHeight;
+    public Transform rayStartingPoint;
+
+    //Attributes
+    bool isGrounded;
+
     Vector3 moveInput;
     Rigidbody rb;
-    public Transform orienation;
     Vector3 moveDir;
     Vector3 skewedInput;
     Vector2 aim;
@@ -24,11 +33,21 @@ public class PlayerController : MonoBehaviour
     void Update()
     {
         GatherInput();
-        Aim();        
+        Aim();
+        isGrounded = Physics.Raycast(rayStartingPoint.position, Vector3.down, playerHeight * 0.5f + 0.2f, whatIsGround);
+        if (isGrounded)
+        {
+            rb.drag = groundDrag;
+        }
+        else
+        {
+            rb.drag = 0;
+        }
     }
     private void FixedUpdate()
     {
         Move();
+        
     }
 
     void Move()
