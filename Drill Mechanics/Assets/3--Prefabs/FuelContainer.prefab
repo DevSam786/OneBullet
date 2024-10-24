@@ -110,4 +110,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 30da05b4082fd094c951e6065014e422, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  fuelRegenAmount: 10
+  fuelRegenAmount: 50000
+  machineTag: BatteryHolder

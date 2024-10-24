@@ -14,7 +14,10 @@ public class PlayerMovement : MonoBehaviour
     Vector3 moveValues;
     bool isMovementPressed;
     bool isAimPressed;
-    [SerializeField] int health;
+
+    public SliderBarSystem slider;
+    int currentHealth;
+    [SerializeField] int maxHealth;
     [SerializeField] bool isGamepad;
     [SerializeField] private float controllerDeadzone = 0.1f;
     [SerializeField] private float gamepadRotatingSmoothing = 1000f;
@@ -29,7 +32,8 @@ public class PlayerMovement : MonoBehaviour
         playerControls.Controls.Aim.started += OnAimAction;
         playerControls.Controls.Aim.performed += OnAimAction;
         playerControls.Controls.Aim.canceled += OnAimAction;
-
+        currentHealth = maxHealth;
+        slider.SetMaxHealth(maxHealth);
     }
     #region Inputs
     void onMovementAction(InputAction.CallbackContext context)
@@ -56,7 +60,6 @@ public class PlayerMovement : MonoBehaviour
             HandleMove();     
         }
         HandleAnimation();
-
     }
     void HandleAim()
     {
@@ -97,17 +100,21 @@ public class PlayerMovement : MonoBehaviour
             var matrix = Matrix4x4.Rotate(Quaternion.Euler(0, 45, 0));
             var skewedInput = matrix.MultiplyPoint3x4(moveValues).normalized;
             transform.position += skewedInput * moveSpeed * Time.deltaTime;
-        }
-        
+        }       
     }
     void HandleAnimation()
     {
-        float x = Mathf.Abs(moveInput.x) < 0.1f ? 0 : moveInput.x;
-        float y = Mathf.Abs(moveInput.y) < 0.1f ? 0 : moveInput.y;
+        if(moveValues.sqrMagnitude > 0)
+        {
+            playerAnim.SetBool("IsWalking", true);
+        }
+        else
+        {
+            playerAnim.SetBool("IsWalking", false);
+        }
 
-        playerAnim.SetFloat("horiX", x);
-        playerAnim.SetFloat("horiY", y);
     }
+
     private void OnEnable()
     {
         playerControls.Controls.Enable();
@@ -123,8 +130,10 @@ public class PlayerMovement : MonoBehaviour
 
     public void TakeDamage(int damage)
     {
-        health -= damage;
-        if (health <= 0)
+        currentHealth -= damage;
+        slider.SetHealth(currentHealth);
+
+        if (currentHealth <= 0)
         {
             Destroy(gameObject);
         }

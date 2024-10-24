@@ -10,9 +10,9 @@ public class FuelContainer : MonoBehaviour
         if (collison.CompareTag(playerTag))
         {
             PlayerFuelCollection player = collison.GetComponent<PlayerFuelCollection>();
-            if (player.hadPetrolContainer == false)
+            if (player.isBatteryInHand == false)
             {
-                player.hadPetrolContainer = true;
+                player.isBatteryInHand = true;
                 Destroy(gameObject);
             }
         }

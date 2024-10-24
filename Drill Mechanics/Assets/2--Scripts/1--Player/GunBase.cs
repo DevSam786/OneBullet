@@ -5,6 +5,7 @@ using UnityEngine;
 public class GunBase : MonoBehaviour
 {
     [Header("Guns Variable")]
+    public GunSO gunSO;
     public GameObject bulletPrefab;
     //bullet force
     [SerializeField]float shootForce, upwardForce, bulletLifeTime;
@@ -21,9 +22,24 @@ public class GunBase : MonoBehaviour
     bool allowToInvoke = true;
     private void Awake()
     {
+        ReferenceOfEverything();
+
         bulletLeft = magazingSize;
         readyToShoot = true;
         allowToInvoke = true;
+    }
+    void ReferenceOfEverything()
+    {
+        bulletPrefab = gunSO.bulletPrefab;
+        shootForce = gunSO.shootForce;
+        upwardForce = gunSO.upwardForce;
+        bulletLifeTime = gunSO.bulletLifeTime;
+        timeBetweenShooting = gunSO.timeBetweenShooting;
+        spread = gunSO.spread;
+        reloadTime = gunSO.reloadTime;
+        timeBetweenShots = gunSO.timeBetweenShots;
+        magazingSize = gunSO.magazingSize;
+        bulletsPerTap = gunSO.bulletsPerTap;    
     }
     void Update()
     {

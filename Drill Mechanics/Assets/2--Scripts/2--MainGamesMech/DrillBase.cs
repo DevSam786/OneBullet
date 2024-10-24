@@ -1,33 +1,33 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class DrillBase : MonoBehaviour
 {
-    [Range(30f,100f)]
-    [SerializeField] float rotationsPerMinute;
+    [Range(30f, 100f)]
+    public int maxRotationSpeed = 100;
+    public float rotationsPerMinute;
     [SerializeField] GameObject drillBlade;
     [SerializeField] float detectionRadius = 5f; 
-    [HideInInspector] public Transform player;           
-    private GunBase playerScript;  
-    [Header("Drill Run")]
-    public float maxFuelAmount;
-    [SerializeField]float fuelAmount;
-    [Range(0.1f, 1f)]
-    [SerializeField]float fuelDraningSpeed;
-    bool isDrillOn;
+    [HideInInspector] public Transform player;
+    ElectricDevice device;
+    private GunBase playerScript;
+    float electricityDraningSpeed;
+    public bool isDrillOn;
     bool playerInRange = false;
-
+    [SerializeField] Slider slider;
 
     // Start is called before the first frame update
     void Start()
     {
         player = GameObject.FindGameObjectWithTag("Player").transform;
         playerScript = player.GetComponentInChildren<GunBase>();
-        fuelAmount = maxFuelAmount;
-        
-        isDrillOn = true;        
-
+        device = GetComponent<ElectricDevice>();
+        slider.maxValue = maxRotationSpeed;
+        slider.minValue = 30;
+        isDrillOn = true;
+        rotationsPerMinute = maxRotationSpeed;
     }
 
     // Update is called once per frame
@@ -35,13 +35,25 @@ public class DrillBase : MonoBehaviour
     {
         if (player == null)
             return;
-        DebugDrawSphere();
         CheckPlayerInRange();
+        slider.onValueChanged.AddListener((v) =>
+        {
+            rotationsPerMinute = v;
+        });
+        if (device.isBatteryCapacityEnds == true)
+        {
+            isDrillOn = false;
+            return;
+        }
+        else
+        {
+            isDrillOn = true;
+        }
+        device.powerConsumption = electricityDraningSpeed;
+        DebugDrawSphere();
         if (isDrillOn)
         {
-            FuelWithRotationSpeed();
-
-            DrillConsumingFuel(fuelDraningSpeed * Time.fixedDeltaTime);
+            ElectricityRotationSpeed();
             drillBlade.transform.Rotate(0, 6.0f * rotationsPerMinute * Time.deltaTime, 0);           
         }
     }
@@ -77,31 +89,31 @@ public class DrillBase : MonoBehaviour
         Debug.DrawRay(transform.position, Vector3.up * detectionRadius, Color.red); // Draws a vertical ray to represent the radius
         // You can draw more visual elements to represent the sphere using Debug.DrawLine for a more complete visualization
     }
-    void FuelWithRotationSpeed()
+    void ElectricityRotationSpeed()
     {
         if(rotationsPerMinute <= 50 && rotationsPerMinute > 29)
         {
-            fuelDraningSpeed = 0.5f;
+            electricityDraningSpeed = 0.5f;
         }
         else if(rotationsPerMinute <= 60 && rotationsPerMinute > 50)
         {
-            fuelDraningSpeed = 0.6f;
+            electricityDraningSpeed = 0.6f;
         }
         else if (rotationsPerMinute <= 70 && rotationsPerMinute > 60)
         {
-            fuelDraningSpeed = 0.7f;
+            electricityDraningSpeed = 0.7f;
         }
         else if (rotationsPerMinute <= 80 && rotationsPerMinute > 70)
         {
-            fuelDraningSpeed = 0.8f;
+            electricityDraningSpeed = 0.8f;
         }
         else if (rotationsPerMinute <= 90 && rotationsPerMinute > 80)
         {
-            fuelDraningSpeed = 0.9f;
+            electricityDraningSpeed = 0.9f;
         }
         else if (rotationsPerMinute <= 100 && rotationsPerMinute > 90)
         {
-            fuelDraningSpeed = 1f;
+            electricityDraningSpeed = 1f;
         }
         else
         {
@@ -113,18 +125,7 @@ public class DrillBase : MonoBehaviour
     {
         Gizmos.color = Color.red; // Red sphere
         Gizmos.DrawWireSphere(transform.position, detectionRadius); // Draws a wireframe sphere in Scene view
-    }
+    }    
+   
     
-    void DrillConsumingFuel(float fuel)
-    {
-        fuelAmount -= fuel;
-    }
-    public void DrillAddingFuel(float fuel)
-    {
-        fuelAmount += fuel;
-        if(fuelAmount >= maxFuelAmount)
-        {
-            fuelAmount = maxFuelAmount;
-        }
-    }
 }

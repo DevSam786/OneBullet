@@ -10,10 +10,14 @@ public class TurretBaseClass : MonoBehaviour
     #region Editor Settings
 
     [Header("Transform")]
-    BuildingTurrets turretBuild;
-    Transform playerTransform;
+    public bool isTurretOn;
+    ElectricDevice device;
+    [SerializeField] string enemyTag;    
+    [SerializeField] float turretRange;
     [SerializeField] Transform partToRotate;
     [SerializeField] float turnSpeed;
+    BuildingTurrets turretBuild;
+    Transform target;
 
     [Header("Aim")]
     [SerializeField] private bool aim;
@@ -22,14 +26,10 @@ public class TurretBaseClass : MonoBehaviour
     [SerializeField] private Transform aimedTransform;    
 
     [Header("Projectile")]
-    [SerializeField] private GameObject projectilePrefab;
-    [SerializeField] private Transform prefabSpawn;
-
-    [Header("Gizmos")]
-    [SerializeField] private bool gizmo_cameraRay = false;
-    [SerializeField] private bool gizmo_ground = false;
-    [SerializeField] private bool gizmo_target = false;
-    [SerializeField] private bool gizmo_ignoredHeightTarget = false;
+    [SerializeField] private GameObject projectilePrefab;    
+    [SerializeField] float startTimeBtwShooting;
+    float timeBtwShooting;
+    
 
     #endregion
     #region Private Fields
@@ -49,83 +49,63 @@ public class TurretBaseClass : MonoBehaviour
     {
         mainCamera = Camera.main;
         turretBuild = GetComponentInParent<BuildingTurrets>();
-      
+        timeBtwShooting = startTimeBtwShooting;
+        device = GetComponent<ElectricDevice>();
     }
 
     private void Update()
     {
-        playerTransform = turretBuild.player.transform;
-
-        Aim();
-       // RefreshLaser();
-       // Shoot();
-        ChangeTargetMode();
-        GizmoSettings();
-    }
-    /*
-    private void OnDrawGizmos()
-    {
-        if (Application.isPlaying == false)
-        {
+        if(device.isBatteryCapacityEnds == true) 
             return;
-        }
-
-        var ray = mainCamera.ScreenPointToRay(Input.mousePosition);
-        if (Physics.Raycast(ray, out var hitInfo, float.MaxValue, groundMask))
+        UpdateTarget();
+        Aim();    
+        if(timeBtwShooting <= 0 && target != null)
         {
-            if (gizmo_cameraRay)
-            {
-                Gizmos.color = Color.magenta;
-                Gizmos.DrawLine(ray.origin, hitInfo.point);
-                Gizmos.DrawWireSphere(ray.origin, 0.5f);
-            }
-
-            var hitPosition = hitInfo.point;
-            var hitGroundHeight = Vector3.Scale(hitInfo.point, new Vector3(1, 0, 1)); ;
-            var hitPositionIngoredHeight = new Vector3(hitInfo.point.x, aimedTransform.position.y, hitInfo.point.z);
-
-            if (gizmo_ground)
-            {
-                Gizmos.color = Color.gray;
-                Gizmos.DrawWireSphere(hitGroundHeight, 0.5f);
-                Gizmos.DrawLine(hitGroundHeight, hitPosition);
-            }
-
-            if (gizmo_target)
-            {
-                Gizmos.color = Color.yellow;
-                Gizmos.DrawWireSphere(hitInfo.point, 0.5f);
-                Gizmos.DrawLine(aimedTransform.position, hitPosition);
-            }
-
-            if (gizmo_ignoredHeightTarget)
-            {
-                Gizmos.color = Color.cyan;
-                Gizmos.DrawWireSphere(hitPositionIngoredHeight, 0.5f);
-                Gizmos.DrawLine(aimedTransform.position, hitPositionIngoredHeight);
-            }
+            Shoot();
+            timeBtwShooting = startTimeBtwShooting;
         }
-    }
-    */
+        else
+        {
+            timeBtwShooting-= Time.deltaTime;
+        }
+    }   
 
     #endregion
-
+    void UpdateTarget()
+    {
+        GameObject[] enemies = GameObject.FindGameObjectsWithTag(enemyTag);
+        float shortestDistance = Mathf.Infinity;
+        GameObject nearestEnemy = null;
+        foreach (GameObject enemy in enemies)
+        {
+            float distance = Vector3.Distance(transform.position, enemy.transform.position);
+            if(distance < shortestDistance)
+            {
+                shortestDistance = distance;
+                nearestEnemy = enemy;
+            }
+            if(nearestEnemy != null && shortestDistance <= turretRange) 
+            {
+                target = nearestEnemy.transform;
+            }
+            else
+            {
+                target = null;
+            }
+        }
+    }
     private void Aim()
     {
-        if (aim == false)
+        if (aim == false || target == null)
         {
             return;
-        }
-
-        //var (success, position) = playerTransform.position;        
-        var direction = playerTransform.position - aimedTransform.position;           
+        }            
+        var direction = target.position - aimedTransform.position;           
         aimedTransform.forward = direction;
         Quaternion lookRotation = Quaternion.LookRotation(direction);
         Vector3 rotation = Quaternion.Lerp(partToRotate.rotation,lookRotation,turnSpeed * Time.deltaTime).eulerAngles;
         partToRotate.rotation = Quaternion.Euler(0, rotation.y, 0);
-
-
-}
+    }
     /*
     private (bool success, Vector3 position) GetMousePosition()
     {
@@ -143,60 +123,20 @@ public class TurretBaseClass : MonoBehaviour
     */
     private void Shoot()
     {
-        if (Input.GetMouseButtonDown(0))
+        GameObject projectile = (GameObject)Instantiate(projectilePrefab, aimedTransform.position, aimedTransform.rotation);
+        TurretBulletBase turretBullet = projectile.GetComponent<TurretBulletBase>();
+        if(projectile != null)
         {
-            var projectile = Instantiate(projectilePrefab, prefabSpawn.position, Quaternion.identity);
-            projectile.transform.forward = aimedTransform.forward;
+            turretBullet.Seek(target);
         }
     }
-    /*
-    private void RefreshLaser()
+   
+
+   
+    private void OnDrawGizmos()
     {
-        if (laserRenderer == null)
-        {
-            return;
-        }
-
-        Vector3 lineEnd;
-
-        if (Physics.Raycast(prefabSpawn.position, prefabSpawn.forward, out var hitinfo, laserLength, laserMask))
-        {
-            lineEnd = hitinfo.point;
-        }
-        else
-        {
-            lineEnd = prefabSpawn.position + aimedTransform.forward * laserLength;
-        }
-
-        laserRenderer.SetPosition(1, aimedTransform.InverseTransformPoint(lineEnd));
-    }*/
-
-    private void ChangeTargetMode()
-    {
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            ignoreHeight = !ignoreHeight;
-        }
-    }
-
-    private void GizmoSettings()
-    {
-        if (Input.GetKeyDown(KeyCode.Alpha1))
-        {
-            gizmo_cameraRay = !gizmo_cameraRay;
-        }
-        else if (Input.GetKeyDown(KeyCode.Alpha2))
-        {
-            gizmo_ground = !gizmo_ground;
-        }
-        else if (Input.GetKeyDown(KeyCode.Alpha3))
-        {
-            gizmo_target = !gizmo_target;
-        }
-        else if (Input.GetKeyDown(KeyCode.Alpha4))
-        {
-            gizmo_ignoredHeightTarget = !gizmo_ignoredHeightTarget;
-        }
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(transform.position,turretRange);
     }
 
     #endregion

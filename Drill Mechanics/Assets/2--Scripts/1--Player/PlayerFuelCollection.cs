@@ -4,34 +4,30 @@ using UnityEngine;
 
 public class PlayerFuelCollection : MonoBehaviour
 {
-    PlayerMovement player;
-    public bool hadPetrolContainer;
+    PlayerMovement player;    
     [SerializeField] GameObject fuelContainer;
+    [SerializeField] GameObject weapon;
     [SerializeField] Transform postionToSpawn;
     BuildingTurrets buildingTurrets;
+    public bool isBatteryInHand;
     private void Start()
     {
-        hadPetrolContainer = false;
         player = GetComponent<PlayerMovement>();
         buildingTurrets = GameObject.FindGameObjectWithTag("Turrets").GetComponent<BuildingTurrets>();
     }
     // Update is called once per frame
     void Update()
     {
-        if (hadPetrolContainer)
+        if (isBatteryInHand)
         {
             GameObject fuelContainerInHand = Instantiate(fuelContainer, postionToSpawn.position,Quaternion.identity,postionToSpawn);
-            hadPetrolContainer = false;
+            weapon.SetActive(false);
         }
-        if(Input.GetKeyDown(KeyCode.E))
+        else
         {
-            if(buildingTurrets != null)
-            {
-                if(buildingTurrets.isTurretActive == false)
-                {
-                    buildingTurrets.isTurretActive = true;
-                }
-            }
+            weapon.SetActive(true);
         }
+
     }
+
 }

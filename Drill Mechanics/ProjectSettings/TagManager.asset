@@ -9,6 +9,7 @@ TagManager:
   - DeliveryBoy
   - Drill
   - Turrets
+  - BatteryHolder
   layers:
   - Default
   - TransparentFX

@@ -5,16 +5,25 @@ using UnityEngine;
 public class DrillFuelRegen : MonoBehaviour
 {
     [SerializeField] float fuelRegenAmount;
+    [SerializeField] string machineTag;
+    PlayerFuelCollection playerFuelCollection;
+
+    private void Start()
+    {
+        playerFuelCollection = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerFuelCollection>();
+    }
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Drill"))
+        if (other.CompareTag(machineTag))
         {
-            DrillBase drillBase = other.GetComponent<DrillBase>();
-            if (drillBase != null )
+            BatteryMachine batteryMachine = other.GetComponent<BatteryMachine>();
+            if (batteryMachine != null )
             {
-                drillBase.DrillAddingFuel(fuelRegenAmount);
+                batteryMachine.PlaceBattery();
+                playerFuelCollection.isBatteryInHand = false;
                 Destroy(gameObject);
             }
         }
     }
+   
 }
